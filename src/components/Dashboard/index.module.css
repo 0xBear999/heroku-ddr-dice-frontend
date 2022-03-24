@@ -1,0 +1,82 @@
+.contentWrapper {
+    display: flex;
+    justify-content: center;
+    padding: 15px;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    max-width: 600px;
+    position: relative;
+    margin: auto;
+
+}
+
+.content>div {
+    display: flex;
+    justify-content: center;
+}
+
+.walletConnectBtnWrapper {
+    margin: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+
+.recentPlayTitle {
+    font-size: 2rem;
+    text-align: center;
+}
+
+.recentPlayPanelWrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.recentPlayPanel {
+    /* background-color: #1e293b !important; */
+}
+
+.gamePlayPanel {
+    display: flex;
+    flex-direction: column;
+    max-width: 420px;
+    margin: auto;
+}
+
+.gamePlayPanel p {
+    text-align: center;
+}
+
+.betSolPanel {
+    grid-template-columns: 1fr 1fr;
+    padding: 25px 0 0 0;
+    grid-gap: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.betSolBtn {
+    width: calc(33.33% - 20px) !important;
+}
+
+.betNumberPanel {
+    padding-right: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.betNumberBtn {
+    width: 40%;
+}
+
+.curSolBalance {
+    position: absolute;
+    top: 0;
+    right: 30px;
+
+}

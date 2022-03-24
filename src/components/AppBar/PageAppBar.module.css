@@ -1,0 +1,89 @@
+.appBarPanel {
+
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 15px 30px;
+}
+
+.profileDialogContentWrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.profileDialogContentWrapper>* {
+    margin: auto;
+    text-align: center;
+}
+
+.profilePic {
+    cursor: pointer;
+    width: 150px;
+    height: 150px;
+
+}
+
+.profilePic>img {
+    border-radius: 50%;
+    border: 1px solid;
+    width: 150px;
+    height: 150px;
+    display: block;
+    /* style={{ border: "1px solid white", borderRadius: '50%' }} */
+}
+
+.profilePic+span {
+    position: absolute;
+    bottom: 10px;
+    right: 5%;
+    display: none;
+    background: #000;
+    color: #fff;
+    opacity: 0.8;
+}
+
+.profilePic:hover+span {
+    display: inline-block;
+}
+
+.pfpImgWrapper {
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.pfpImgWrapper>div {
+    width: 70px;
+    height: 70px;
+    margin: 10px;
+}
+
+.imgPfp {
+    cursor: pointer;
+    width: 70px;
+    height: 70px;
+
+}
+
+.userPfp {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.userPfpWrapper {
+    border-radius: 50% !important;
+    border: 2px solid #dee2e6 !important;
+    padding: 2px !important;
+
+}
+
+/* 
+.userNFTsImgWrapper {}
+
+.userNFTsImgWrapper>img {
+     width: calc(33.33% - 10px);
+    height: auto; 
+} */
