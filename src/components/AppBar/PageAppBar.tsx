@@ -259,8 +259,9 @@ const PageAppBar = (props: Props) => {
   }
 
   const saveProfileData = async () => {
-
-    var address = wallet.publicKey?.toBase58()
+    if (!wallet.connected || !wallet.publicKey) return;
+    var address = wallet.publicKey.toBase58()
+    console.log(" posted data : ", address, profileInputedUsername, profileSelectedPic)
     var result = await axios.post(`${SERVER_ENDPOINT}/saveUserProfile`, {
       address: address,
       name: profileInputedUsername,
