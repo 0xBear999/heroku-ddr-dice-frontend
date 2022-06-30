@@ -1,0 +1,159 @@
+.title1 {
+    text-align: center;
+    font-weight: bold;
+    font-size: 40px;
+}
+
+.title2 {
+    text-align: center;
+    font-size: 30px;
+}
+
+.subTitle {
+    display: flex;
+    justify-content: space-between;
+}
+
+.paperWrapper {
+    display: flex;
+    justify-content: space-evenly;
+    margin-bottom: 30px;
+}
+
+.paperPanel {
+    width: 25%;
+    cursor: pointer;
+}
+
+.paperContent {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+}
+
+.paperContent .abovePanel {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 30px;
+}
+
+.abovePanel>.imgWrapper {
+    display: flex;
+    align-items: center;
+
+}
+
+.paperContent .belowPanel {
+    display: flex;
+    text-align: center;
+    line-height: 32px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.paperContent .belowPanel>div {
+    width: 50%;
+    padding: 10px;
+}
+
+.gameProgressBar {
+    width: 100%;
+    height: 30px;
+    display: flex;
+    text-align: center;
+}
+
+.gameProgressBar>div:first-child {
+    border-radius: 10px 0px 0px 10px;
+}
+
+.gameProgressBar>div:last-child {
+    border-radius: 0px 10px 10px 0px;
+}
+
+.userLogo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.historyDetailPanel {}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.row .resultRand {
+    width: 100px;
+    display: flex;
+}
+
+.row>span:first-child {
+    width: 50%;
+    padding-left: 20px;
+}
+
+.row .resultRand>div {
+    width: 50px !important;
+    display: block;
+}
+
+.row .resultRand>div:first-child {
+    text-align: left;
+}
+
+.row .resultRand>div:last-child {
+    text-align: right;
+}
+
+.wonborder {
+    border-bottom: 1px solid green;
+}
+
+.lostborder {
+    border-bottom: 1px solid red;
+}
+
+.subLogo {
+    width: 30px;
+    height: 30px;
+}
+
+@media (max-width: 800px) {
+    .paperWrapper {
+        flex-direction: column;
+    }
+
+    .paperPanel {
+        width: auto;
+        margin: 15px 0;
+    }
+
+    .subTitle {
+        display: none;
+    }
+
+    .gameProgressBar {
+        display: none;
+    }
+}
+
+@media (max-width: 660px) {
+    .row>span:first-child {
+        width: 100%;
+    }
+
+    .row>span:last-child {
+        display: none;
+    }
+
+    .title1 {
+        font-size: 28px;
+    }
+
+    .title2 {
+        font-size: 24px;
+    }
+}
