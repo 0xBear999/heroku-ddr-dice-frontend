@@ -68,8 +68,8 @@
 }
 
 .userPfp {
-    width: 50px;
-    height: 50px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
 }
 
@@ -79,6 +79,86 @@
     padding: 2px !important;
 
 }
+
+.mobileThemeToggleBtn {
+    display: none !important;
+    width: 40px;
+    height: 40px;
+}
+
+.desktopThemeToggleBtn {
+    border: 2px solid white !important;
+    font-family: "Bree Serif" !important;
+    font-size: 18px;
+    padding: 3px 10px;
+}
+.helpBtn {
+    border: 2px solid white !important;
+    font-family: "Bree Serif" !important;
+    font-size: 18px;
+    padding: 3px 10px;
+}
+.helpDialogContent>h2 {
+    text-align: center;
+    font-size: 40px;
+}
+
+.helpDialogContent>p {
+    text-align: justify;
+    font-size: 20px;
+}
+.statDialogContent>h3 {
+    text-align: center;
+    font-size: 40px;
+    margin: 25px auto;
+}
+.statDialogContent>p {
+    text-align: justify;
+    font-size: 20px;
+}
+.winsInRowList {
+    width: 100%;
+    max-width: 600px;
+    min-width: 500px;
+    border-radius: 10px;
+    padding: 0;
+}
+@media (max-width: 660px) {
+    .helpBtn {
+        display: none !important;
+    }
+    .winsInRowList {
+        min-width: auto;
+    }
+    .statDialogContent>h3 {
+        text-align: center;
+        font-size: 30px;
+        margin: 10px auto;
+    }
+}
+
+@media (max-width: 450px) {
+    .mobileThemeToggleBtn {
+        display: block !important;
+    }
+
+    .desktopThemeToggleBtn {
+        display: none !important;
+        margin: auto 15px;
+    }
+
+    .appBarPanel>div:last-child {
+        display: flex;
+        align-items: center;
+    }
+}
+
+@media (max-width: 1000px) {
+    .desktop2ThemeToggleBtn {
+        display: none !important;
+    }
+}
+
 
 /* 
 .userNFTsImgWrapper {}

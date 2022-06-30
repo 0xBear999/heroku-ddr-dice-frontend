@@ -2,6 +2,7 @@
     display: flex;
     justify-content: center;
     padding: 15px;
+    padding-bottom: 60px;
 }
 
 .content {
@@ -19,7 +20,7 @@
 }
 
 .walletConnectBtnWrapper {
-    margin: 15px;
+    margin: -20px 15px 15px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -61,22 +62,65 @@
 }
 
 .betSolBtn {
-    width: calc(33.33% - 20px) !important;
+    width: calc(50% - 20px) !important;
 }
 
 .betNumberPanel {
-    padding-right: 20px;
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    grid-gap: 20px;
+    grid-template-columns: 1fr 1fr;
+
+
 }
 
 .betNumberBtn {
-    width: 40%;
+    width: calc(50% - 20px) !important;
 }
 
 .curSolBalance {
     position: absolute;
-    top: 0;
-    right: 30px;
+    top: -20px;
+    right: 18px;
+}
 
+.congratText {
+    position: absolute;
+    font-size: 35px;
+    text-align: center;
+}
+
+.diceImgWrapper {
+    margin-top: -50px;
+    margin-left: -100px;
+    margin-right: -100px;
+}
+.diceImgWrapper >img{
+    animation: fadeIn 5s;
+}
+
+@keyframes fadeIn {
+    0% {opacity:0;}
+    100% {opacity:0.85;}
+}
+
+.ready2RollBtn {
+    max-width: 360px !important;
+    margin: auto  !important;
+    border: 2px solid white  !important;
+    font-family: "Bree Serif" !important;
+    font-size: 28px !important;
+}
+@media (max-width: 1000px) {
+    .diceImgWrapper{
+        margin: 0;
+    }
+    .walletConnectBtnWrapper {
+        margin: 15px;
+    }
+}
+@media (max-width: 660px) {
+.ready2RollBtn {
+    font-size: 18px !important;
+}
 }

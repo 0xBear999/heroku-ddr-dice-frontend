@@ -1,10 +1,13 @@
 import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
 import themeReducer from './themeSlice';
+import liveplayReducer from './liveplaySlice';
 
 export const store = configureStore({
     reducer: {
         // defiData: defiDataReducer,
-        theme: themeReducer
+        theme: themeReducer,
+        liveplay: liveplayReducer
+
     },
 });
 

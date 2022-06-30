@@ -45,9 +45,29 @@ import ListItemText from '@mui/material/ListItemText';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import { Confetti } from '../confetti'
 
 import { Wallet } from '@project-serum/anchor';
 
+const perFace = [
+  [-0.1, 0.3, -1],
+  [-0.1, 0.6, -0.4],
+  [-0.85, -0.42, 0.73],
+  [-0.8, 0.3, -0.75],
+  [0.3, 0.45, 0.9],
+  [-0.16, 0.6, 0.18]
+];
+const setVal = (num: number) => {
+  var eleList = document.querySelectorAll(".dice") as unknown as any[];
+  var dice = [...eleList];
+  dice.forEach((die, index) => {
+    die.style.transform = `rotate3d(${perFace[num - 1]}, 180deg)`;
+
+    console.log('-----------------------------------')
+  });
+
+  // $(".dice").css("transform", `rotate3d(${perFace[num - 1]}, 180deg)`);
+};
 const lightTheme = createTheme({
   palette: {
     mode: 'light',
@@ -67,13 +87,17 @@ export const MainContent = (props: Props) => {
   const [enterGame, setEnterGame] = React.useState(true);
   const [curSolBalance, setCurSolBalance] = React.useState(0);
   const [betNum, setBetNum] = React.useState(1);
-  const [betSol, setBetSol] = React.useState(0.05);
+  const [betSol, setBetSol] = React.useState(0.1);
   const [diceRolling, setDiceRolling] = React.useState(false);
   const [gameEnded, setGameEnded] = React.useState(false);
   const [resultRand, setResultRand] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
-
+  const [mainGameHistory, setMainGameHistory] = React.useState<any[]>([]);
+  const [isloadingConfetti, setIsLoadingConfetti] = React.useState(false)
+  const [resultMessage, setResultMessage] = React.useState("Congrats !")
+  const [showResultMsg, setShowResultMsg] = React.useState(false);
   const handleEnterGame = () => {
+    setShowResultMsg(false)
     setEnterGame(false)
   }
   // React.useEffect(() => {
@@ -86,6 +110,37 @@ export const MainContent = (props: Props) => {
   //     console.log('class toggled before rolling')
   //   });
   // }, [])
+  React.useEffect(() => {
+    const socket = socketIOClient(SERVER_ENDPOINT);
+    socket.on("update_stat_data", data => {
+      // console.log('socket stat data received : ', data.txsHistory.reverse());
+      var txsHistoryArrayTmp = (data.txsHistory as any[]).sort((item1, item2) => {
+        return item1.timestamp < item2.timestamp ? 1 : -1
+      });
+
+      setMainGameHistory(txsHistoryArrayTmp)
+      // var array = (data.playTxs as any[]).map(item => Object.fromEntries(
+      //   Object.entries(item).map(
+      //     ([key, val]) => [key === 'player' ? 'timestamp' : key, val]
+      //   )
+      // ))
+    });
+
+    getStatData();
+  }, [])
+
+  const getStatData = async () => {
+    try {
+      var statData = await axios.post(`${SERVER_ENDPOINT}/getStatData`);
+      // console.log("=================================init stat data ::::", (statData.data.txsHistory as any[]).reverse())
+      var txsHistoryArrayTmp = (statData.data.txsHistory as any[]).sort((item1, item2) => {
+        return item1.timestamp < item2.timestamp ? 1 : -1
+      });
+      setMainGameHistory(txsHistoryArrayTmp);
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   React.useEffect(() => {
     if (wallet.connected) {
@@ -95,7 +150,7 @@ export const MainContent = (props: Props) => {
   }, [wallet.connected]);
   const getCurSolBalance = async () => {
     if (!wallet.connected || !wallet.publicKey) return;
-    let curBalance = parseFloat((await solConnection.getBalance(wallet.publicKey) / LAMPORTS_PER_SOL).toFixed(4));
+    let curBalance = parseFloat((await solConnection.getBalance(wallet.publicKey) / LAMPORTS_PER_SOL).toFixed(2));
     setCurSolBalance(curBalance);
 
   }
@@ -137,69 +192,120 @@ export const MainContent = (props: Props) => {
   }
 
   const playBtnClicked = async () => {
+    setShowResultMsg(false)
 
     if (curSolBalance < betSol * 1.05) errorAlert("Please check your sol balance again!");
     setDiceRolling(true);
-
-    var eleList = document.querySelectorAll(".die-list") as unknown as any[];
-    var dice = [...eleList];
-    dice.forEach((die, index) => {
-
-      die.classList.toggle("even-roll");
-      die.classList.toggle("odd-roll");
-      console.log('-----------------------------------')
-    });
+    // setTimeout(() => {
 
 
-    var setintervalDice = setInterval(() => {
-      dice = document.querySelectorAll(".die-list") as unknown as any[];
-      dice.forEach((die, index) => {
-        die.classList.toggle("even-roll");
-        die.classList.toggle("odd-roll");
-      });
+    // }, 50);
 
-    }, 1250);
-    const result = await playGame(wallet, betNum, betSol, () => setCurSolBalance(parseFloat((curSolBalance - betSol * 1.05).toFixed(4))));
 
-    if (!result) {
+    // var setintervalDice = setInterval(() => {
+    //   dice = document.querySelectorAll(".dice") as unknown as any[];
+    //   dice.forEach((die, index) => {
+    //     die.classList.remove("throw");
+    //     // die.classList.add("up");
+
+    //     // setVal(2);
+    //     setTimeout(() => {
+    //       die.classList.add("throw");
+
+    //     }, 50);
+    //     // die.classList.toggle("even-roll");
+    //     // die.classList.toggle("odd-roll");
+    //   });
+
+    // }, 800);
+    const result = await playGame(wallet, betNum, betSol, () => setCurSolBalance(parseFloat((curSolBalance - betSol * 1.05).toFixed(2))), () => setLoading(true));
+    setLoading(false)
+    if (!result || result.gameData === undefined) {
+      // clearInterval(result?.setintervalDice)
+
       setDiceRolling(false);
-      if (setintervalDice) {
-        console.log(':::::', setintervalDice)
-        clearInterval(setintervalDice as unknown as number);
-      }
-      if (document.getElementById('die-1')) (document.getElementById('die-1') as any).dataset.roll = 1;
+      // if (setintervalDice) {
+      //   console.log(':::::', setintervalDice)
+      //   clearInterval(setintervalDice as unknown as number);
 
+      //   var eleList = document.querySelectorAll(".dice") as unknown as any[];
+      //   var dice = [...eleList];
+      //   dice.forEach((die, index) => {
+      //     die.classList.remove("throw");
+      //     die.classList.remove("up");
+
+      //   });
+      // }
+      // if (document.getElementById('die-1')) (document.getElementById('die-1') as any).dataset.roll = 1;
       errorAlert("Transaction error! Please try again");
       return;
-    } else if (result === -1) {
-      setDiceRolling(false);
-      successAlert("You can try again now!");
-      return;
-
     }
+    // clearInterval(result?.setintervalDice)
 
-    if (result.rewardAmount > 0) {
-      successAlert("You won !");
+    setTimeout(() => {
+      var eleList = document.querySelectorAll(".dice") as unknown as any[];
+      eleList.forEach((die, index) => {
+        die.classList.remove("throw");
+        setVal(result.gameData.rand.toNumber());
+
+        // die.classList.add("up");
+        // setVal(2);
+        setTimeout(() => {
+          die.classList.add("throw");
+
+
+        }, 50);
+
+        // die.classList.toggle("even-roll");
+        // die.classList.toggle("odd-roll");
+        console.log('-----------------------------------')
+      });
+
+    }, 1000);
+
+
+    if (result.gameData.rewardAmount.toNumber() > 0) {
+      setTimeout(() => {
+        successAlert("You won !");
+        setResultMessage("You Won. Congrats !")
+        setIsLoadingConfetti(true)
+
+      }, 3000)
     } else {
-      errorAlert("You lost !")
+      setTimeout(() => {
+        setResultMessage("Keep Dreaming !")
+        errorAlert("Keep Dreaming !")
+      }, 3000)
     }
 
-    getCurSolBalance();
+    setTimeout(() => {
+      setShowResultMsg(true)
+      getCurSolBalance();
+      setGameEnded(true);
+
+      setResultRand(result.gameData.rand.toNumber());
+
+
+      console.log(
+        `amount : `, result.gameData.amount.toNumber(),
+        `playTime : `, result.gameData.playTime.toString(),
+        `rand : `, result.gameData.rand.toNumber(),
+        `rewardAmount : `, result.gameData.rewardAmount.toNumber(),
+        `setNum : `, result.gameData.setNum.toNumber()
+      );
+    }, 2500)
+
     // setDiceRolling(false);
-    if (setintervalDice) clearInterval(setintervalDice);
-    if (document.getElementById('die-1')) (document.getElementById('die-1') as any).dataset.roll = result.rand.toNumber();
-    setGameEnded(true);
+    // if (setintervalDice) clearInterval(setintervalDice);
+    // var eleList = document.querySelectorAll(".dice") as unknown as any[];
+    // var dice = [...eleList];
+    // dice.forEach((die, index) => {
+    //   die.classList.remove("throw");
+    //   die.classList.remove("up");
 
-    setResultRand(result.rand.toNumber());
+    // });
+    // if (document.getElementById('die-1')) (document.getElementById('die-1') as any).dataset.roll = result.rand.toNumber();
 
-
-    console.log(
-      `amount : `, result.amount.toNumber(),
-      `playTime : `, result.playTime.toString(),
-      `rand : `, result.rand.toNumber(),
-      `rewardAmount : `, result.rewardAmount.toNumber(),
-      `setNum : `, result.setNum.toNumber()
-    );
   }
 
   const claimClicked = async () => {
@@ -208,8 +314,10 @@ export const MainContent = (props: Props) => {
     setLoading(false);
     successAlert('Doubled money. Congrats !')
     curSolBalance
-    setCurSolBalance(parseFloat((curSolBalance + betSol).toFixed(4)));
+    setCurSolBalance(parseFloat((curSolBalance + betSol).toFixed(2)));
     retryBtnClicked();
+    setIsLoadingConfetti(false)
+
   }
 
   const walletConnectBtnClicked = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -217,10 +325,11 @@ export const MainContent = (props: Props) => {
   }
 
   const retryBtnClicked = () => {
+    setShowResultMsg(false);
     setDiceRolling(false);
     setGameEnded(false);
     setBetNum(1);
-    setBetSol(0.05);
+    setBetSol(0.1);
     setResultRand(0);
     setLoading(false);
 
@@ -238,7 +347,7 @@ export const MainContent = (props: Props) => {
         <div style={{ position: "relative", width: "100%" }}>
           <div className={`${style.content}`}>
             <div className={`${style.diceImgWrapper}`}>
-              <img src='./img/dice-png.png' alt='dreamy dice logo' />
+              <img src='./img/logo.png' alt='dreamy dice logo' style={{ width: "100%" }} />
             </div>
             {enterGame ?
               <>
@@ -249,12 +358,12 @@ export const MainContent = (props: Props) => {
                         <WalletMultiButton onClick={(e) => walletConnectBtnClicked(e)} />
                       </WalletModalProvider>
                       : <>
-                        <Button variant="contained" size="large" style={{ maxWidth: '300px', margin: 'auto' }} onClick={handleEnterGame}>
-                          DOUBLE OR NOTHING
+                        <Button variant="contained" size="large" className={`${style.ready2RollBtn}`} onClick={handleEnterGame}>
+                          Ready to Roll?
                         </Button>
-                        <p>
+                        {/* <p>
                           CLICK TO SEE OPTIONS
-                        </p>
+                        </p> */}
                       </>
 
                   }
@@ -265,29 +374,45 @@ export const MainContent = (props: Props) => {
                   </p>
                   <div className={`${style.recentPlayPanel}`} style={{ borderRadius: '10px' }}>
                     <List sx={{ width: '100%', maxWidth: 600, bgcolor: 'background.secondary', border: '1px solid', borderColor: 'border.secondary' }} style={{ borderRadius: '10px', padding: '0px' }}>
-                      {[0, 1, 2, 3].map((value, index) => {
-                        const labelId = `checkbox-list-secondary-label-${value}`;
+                      {mainGameHistory.slice(0, 12).map((item, index) => {
+                        var timeAgo = new Date().getTime() / 1000 - item.timestamp;
+                        var agoString = '';
+                        if (timeAgo < 60) agoString = 'in ' + Math.ceil(timeAgo) + ' seconds ago';
+                        if (timeAgo >= 60 && timeAgo < 120) agoString = '' + Math.floor(timeAgo / 60) + ' minute ago'
+                        if (timeAgo >= 120 && timeAgo < 3600) agoString = '' + Math.floor(timeAgo / 60) + ' minutes ago'
+                        if (timeAgo >= 3600 && timeAgo < 7200) agoString = '' + Math.floor(timeAgo / 3600) + ' hour ago'
+                        if (timeAgo >= 7200 && timeAgo < 86400) agoString = '' + Math.floor(timeAgo / 3600) + ' hours ago'
+                        if (timeAgo >= 86400) agoString = '' + Math.ceil(timeAgo / 86400) + ' days ago'
+                        if (timeAgo >= 86400 * 30) agoString = '' + Math.ceil(timeAgo / 86400 / 30) + ' months ago'
+                        const labelId = `checkbox-list-secondary-label-${item}`;
                         return (
                           <>
                             <ListItem
-                              key={value}
+                              key={index}
                               secondaryAction={
-                                '1 min ago'
+                                agoString
                               }
                               disablePadding
                             >
                               <ListItemButton>
                                 <ListItemAvatar>
                                   <Avatar
-                                    alt={`Avatar n°${value + 1}`}
-                                    src={`./img/dice-png.png`}
+                                    alt={`Avatar n°${item + 1}`}
+                                    src={item.pfp ? item.pfp : `./img/dice-png.png`}
                                   />
                                 </ListItemAvatar>
-                                <ListItemText id={labelId} primary={`Line item ${value + 1}`} />
+                                <ListItemText id={labelId}  >
+
+                                  {item.name} Played With {item.betSol} and
+
+                                  {
+                                    item.wl > 0 ? <span style={{ color: "green" }}> Doubled</span> : <span style={{ color: "darkmagenta" }}> Busted</span>
+                                  }
+                                </ListItemText>
                               </ListItemButton>
                             </ListItem>
                             {
-                              index !== [0, 1, 2, 3].length - 1 &&
+                              index !== mainGameHistory.length - 1 &&
                               <Divider />
                             }
                           </>
@@ -300,24 +425,23 @@ export const MainContent = (props: Props) => {
               </> :
               <>
                 <div className={`${style.gamePlayPanel}`}>
-                  <p>I like</p>
+                  <p>Rolling</p>
                   <div className={`${style.betNumberPanel}`}>
-                    <Button variant="contained" size="large" className={`${style.betNumberBtn} betNumBtn selected`} onClick={(e) => handleBetNumClick(e, 1)}>1 - 3</Button>
-                    <Button variant="contained" size="large" className={`${style.betNumberBtn} betNumBtn`} onClick={(e) => handleBetNumClick(e, 4)}>4 - 6</Button>
+                    <Button variant="contained" size="large" className={`${style.betNumberBtn} betNumBtn selected`} onClick={(e) => handleBetNumClick(e, 1)}>Lows(1 - 3)</Button>
+                    <Button variant="contained" size="large" className={`${style.betNumberBtn} betNumBtn`} onClick={(e) => handleBetNumClick(e, 4)}>Highs(4 - 6)</Button>
                   </div>
                   <p >
                     FOR
                   </p>
                   <div className={`${style.betSolPanel}`}>
-                    <Button variant="contained" size="large" className={`${style.betSolBtn} betSolBtn selected`} onClick={(e) => handleBetSolClick(e, 0.05)}>0.05 SOL</Button>
-                    <Button variant="contained" size="large" className={`${style.betSolBtn} betSolBtn`} onClick={(e) => handleBetSolClick(e, 0.1)}>0.1 SOL</Button>
-                    <Button variant="contained" size="large" className={`${style.betSolBtn} betSolBtn`} onClick={(e) => handleBetSolClick(e, 0.25)}>0.25 SOL</Button>
+                    <Button variant="contained" size="large" className={`${style.betSolBtn} betSolBtn selected`} onClick={(e) => handleBetSolClick(e, 0.1)}>0.1 SOL</Button>
+                    <Button variant="contained" size="large" className={`${style.betSolBtn} betSolBtn`} onClick={(e) => handleBetSolClick(e, 0.2)}>0.2 SOL</Button>
+                    <Button variant="contained" size="large" className={`${style.betSolBtn} betSolBtn`} onClick={(e) => handleBetSolClick(e, 0.35)}>0.35 SOL</Button>
                     <Button variant="contained" size="large" className={`${style.betSolBtn} betSolBtn`} onClick={(e) => handleBetSolClick(e, 0.5)}>0.5 SOL</Button>
-                    <Button variant="contained" size="large" className={`${style.betSolBtn} betSolBtn`} onClick={(e) => handleBetSolClick(e, 1)}>1 SOL</Button>
-                    <Button variant="contained" size="large" className={`${style.betSolBtn} betSolBtn`} onClick={(e) => handleBetSolClick(e, 2)}>2 SOL</Button>
+
                   </div>
                   <Divider style={{ width: 'calc(100% - 20px)' }} />
-                  <Button variant="contained" size="large" style={{ width: 'calc(100% - 20px)', margin: '20px 0' }} onClick={playBtnClicked}>DOUBLE OR NOTHING</Button>
+                  <Button variant="contained" size="large" style={{ width: 'calc(100% - 20px)', margin: '20px 0' }} onClick={playBtnClicked}>READY TO ROLL</Button>
                   <Divider style={{ width: 'calc(100% - 20px)' }} />
                   <p>
                     <span style={{ textDecoration: 'underline' }}>STUCK ? </span>
@@ -340,10 +464,8 @@ export const MainContent = (props: Props) => {
         <div style={{ width: '100%', position: "relative" }}>
           <div style={{ maxWidth: '420px', margin: 'auto', width: '100%', position: 'relative' }}>
             <div style={{ display: 'flex', alignItems: 'center', height: "calc(100vh - 105px)" }}>
-              <div style={{ maxWidth: '420px', margin: 'auto', width: '100%' }}>
-                <div>
-                  <Dice />
-                </div>
+              <div style={{ maxWidth: '420px', margin: 'auto', width: '100%', marginTop: "60%" }}>
+                <Dice />
                 {
                   gameEnded ?
                     <div>
@@ -364,8 +486,9 @@ export const MainContent = (props: Props) => {
                             <Button variant="contained" size="large" style={{ width: 'calc(100% - 20px)', margin: '20px 0' }} onClick={claimClicked}>Claim Reward</Button>
                           </> :
                           <>
-                            <p>Try again?</p>
-                            <Button variant="contained" size="large" style={{ width: 'calc(100% - 20px)', margin: '20px 0' }} onClick={retryBtnClicked}>DOUBLE OR NOTHING</Button>
+                            {/* <p>Try again?</p> */}
+                            <Button variant="contained" size="large" style={{ width: 'calc(100% - 20px)', margin: '20px 0' }} onClick={retryBtnClicked}>Keep Dream</Button>
+                            {/* READY TO ROLL */}
                           </>
 
 
@@ -378,8 +501,8 @@ export const MainContent = (props: Props) => {
                         Rolling...
                       </p>
                       <p>
-                        Bet to
-                        {betNum >= 1 && betNum <= 3 ? "  1 - 3  " : "  4 - 6  "}
+                        Play With
+                        {betNum >= 1 && betNum <= 3 ? "  Lows(1 - 3)  " : "  Highs(4 - 6)  "}
                         for {betSol} SOL
                       </p>
                     </div>
@@ -399,6 +522,17 @@ export const MainContent = (props: Props) => {
         loading &&
         <LoadingPage />
       }
+      {isloadingConfetti &&
+
+        <Confetti />
+      }
+      {
+        showResultMsg &&
+        <span className={`${style.congratText}`}>{resultMessage}<br /><span style={{ fontSize: "27px" }}>Result Number : {resultRand}</span></span>
+      }
+
+
+
     </Box>
   )
 }

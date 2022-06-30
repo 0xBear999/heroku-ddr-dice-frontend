@@ -47,6 +47,8 @@ import { SOLANA_NETWORK, SERVER_ENDPOINT } from '../../contexts/config';
 
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import { selectDarkTheme, toggleTheme } from '../../redux/themeSlice';
+import { selectLiveplay, toggleLiveplay } from '../../redux/liveplaySlice';
+
 import DeleteIcon from '@mui/icons-material/Delete';
 import Brightness2Icon from '@mui/icons-material/Brightness2';
 import Brightness5Icon from '@mui/icons-material/Brightness5';
@@ -61,50 +63,15 @@ import {
   getParsedNftAccountsByOwner
 } from "@nfteyez/sol-rayz";
 import IconButton from '@mui/material/IconButton';
-
-
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import CasinoIcon from '@mui/icons-material/Casino';
+import HelpIcon from '@mui/icons-material/Help';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import Avatar from '@mui/material/Avatar';
+import socketIOClient from "socket.io-client";
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 const solConnection = new Connection(web3.clusterApiUrl(SOLANA_NETWORK));
-
-const StyledMenu = styled((props: MenuProps) => (
-  <Menu
-    elevation={0}
-    anchorOrigin={{
-      vertical: 'bottom',
-      horizontal: 'right',
-    }}
-    transformOrigin={{
-      vertical: 'top',
-      horizontal: 'right',
-    }}
-    {...props}
-  />
-))(({ theme }) => ({
-  '& .MuiPaper-root': {
-    borderRadius: 6,
-    marginTop: theme.spacing(1),
-    minWidth: 180,
-    color:
-      theme.palette.mode === 'light' ? 'rgb(55, 65, 81)' : theme.palette.grey[300],
-    boxShadow:
-      'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-    '& .MuiMenu-list': {
-      padding: '4px 0',
-    },
-    '& .MuiMenuItem-root': {
-      '& .MuiSvgIcon-root': {
-        fontSize: 18,
-        color: theme.palette.text.secondary,
-        marginRight: theme.spacing(1.5),
-      },
-      '&:active': {
-        backgroundColor: alpha(
-          theme.palette.primary.main,
-          theme.palette.action.selectedOpacity,
-        ),
-      },
-    },
-  },
-}));
 
 interface Props {
   gameBalance: number;
@@ -112,32 +79,72 @@ interface Props {
   handleMobileAppBarOpened: () => void;
 
 }
+
+const userPfp = [
+  "./img/profile_pic1.PNG",
+  "./img/profile_pic2.PNG",
+  "./img/profile_pic3.PNG"
+]
+
+const socket = socketIOClient(SERVER_ENDPOINT);
+
 const PageAppBar = (props: Props) => {
 
 
   const wallet = useWallet();
   const darkModeTheme = useAppSelector(selectDarkTheme);
+  const liveplay = useAppSelector(selectLiveplay);
+
   const dispatch = useAppDispatch();
   const [maxProfileDialogWidth, setMaxProfileDialogWidth] = React.useState<DialogProps['maxWidth']>('sm');
   const [maxProfilePicDialogWidth, setMaxProfilePicDialogWidth] = React.useState<DialogProps['maxWidth']>('xs');
-
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [maxHelpDialogWidth, setMaxHelpDialogWidth] = React.useState<DialogProps['maxWidth']>('lg');
   const [userNFTInfo, setUserNFTInfo] = React.useState<any[]>([]);
   const [profileUsername, setProfileUsername] = React.useState('');
   const [profileUserPic, setProfileUserPic] = React.useState('');
   const [profileSelectedPic, setProfileSelectedPic] = React.useState('');
   const [profileInputedUsername, setProfileInputedUsername] = React.useState('');
   const [forceState, setForceState] = React.useState(false);
-  const open = Boolean(anchorEl);
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
 
   const [openProfileDialog, setOpenProfileDialog] = React.useState(false);
   const [openProfilePicDialog, setOpenProfilePicDialog] = React.useState(false);
+  const [openHelpDialog, setOpenHelpDialog] = React.useState(false);
+  const [openStatDialog, setOpenStatDialog] = React.useState(false);
+
+  const [mostWinsInRowHistory, setMostWinsInRowHistory] = React.useState<any[]>([]);
+
+
+  // 
+  React.useEffect(() => {
+    socket.on("update_stat_data", data => {
+      console.log('socket stat data received : ', data);
+
+      let mostPlays = (data.historyStat as any[]).sort((item1, item2) => {
+        return item1.totalWins / item1.totalPlays > item2.totalWins / item2.totalPlays ? -1 : 1
+      }).slice(0, 15);
+      setMostWinsInRowHistory(mostPlays);
+      // var array = (data.playTxs as any[]).map(item => Object.fromEntries(
+      //   Object.entries(item).map(
+      //     ([key, val]) => [key === 'player' ? 'timestamp' : key, val]
+      //   )
+      // ))
+    });
+
+    getStatData();
+
+  }, [])
+
+  const getStatData = async () => {
+    let result = await axios.post(`${SERVER_ENDPOINT}/getStatData`);
+    if (result.status !== 200) return;
+
+    var mostPlays = (result.data.historyStat as any[]).sort((item1, item2) => {
+      return item1.winsInRow > item2.winsInRow ? -1 : 1
+    }).slice(0, 10);
+    console.log(mostPlays)
+    setMostWinsInRowHistory(mostPlays);
+  }
+  // 
   const handleProfileDialogClose = () => {
     setOpenProfileDialog(false)
   }
@@ -156,6 +163,13 @@ const PageAppBar = (props: Props) => {
     setOpenProfilePicDialog(true)
   }
 
+  const goLivePlays = () => {
+    dispatch(toggleLiveplay())
+  }
+  const goRolldice = () => {
+    dispatch(toggleLiveplay())
+
+  }
 
   const getNFTInfo = async () => {
     var holderAccount: any[] = [];
@@ -259,15 +273,17 @@ const PageAppBar = (props: Props) => {
   }
 
   const saveProfileData = async () => {
-    if (!wallet.connected || !wallet.publicKey) return;
+    if (!wallet.publicKey || !profileInputedUsername || !profileInputedUsername.trim()) return;
     var address = wallet.publicKey.toBase58()
-    console.log(" posted data : ", address, profileInputedUsername, profileSelectedPic)
     var result = await axios.post(`${SERVER_ENDPOINT}/saveUserProfile`, {
       address: address,
       name: profileInputedUsername,
       pfp: profileSelectedPic
     })
-    if (result.status !== 200) return;
+    if (result.status !== 200) {
+      errorAlert('error occured !');
+      return;
+    }
     setProfileUsername(profileInputedUsername);
     setProfileUserPic(profileSelectedPic);
     handleProfileDialogClose();
@@ -280,63 +296,118 @@ const PageAppBar = (props: Props) => {
       getUserProfileData(wallet.publicKey.toBase58());
     }
   }, [wallet.connected])
+
+  const randomUserPfp = () => {
+    let rantIdx = Math.floor(Math.random() * 3);
+    return userPfp[rantIdx];
+  }
+
+  const handleOpenHelpDialog = () => {
+    setOpenHelpDialog(true);
+  }
+
+  const handleHelpDialogClose = () => {
+    setOpenHelpDialog(false);
+  }
+  const handleOpenStatDialog = () => {
+    setOpenStatDialog(true);
+  }
+
+  const handleStatDialogClose = () => {
+    setOpenStatDialog(false);
+  }
   return (
     <div className={`${style.appBarPanel}`} >
-      <div>
-        <Button size="large" variant="outlined" endIcon={darkModeTheme ? <Brightness2Icon /> : <Brightness5Icon />} color="secondary" onClick={() => dispatch(toggleTheme())}>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        {/* <Button size="large" variant="outlined" endIcon={darkModeTheme ? <Brightness2Icon /> : <Brightness5Icon />} color="secondary" onClick={() => dispatch(toggleTheme())} className={`${style.desktopThemeToggleBtn}`}>
           {
             darkModeTheme ? 'DARK' : 'LIGHT'
           }
         </Button>
-      </div>
-      <div>
+        {
+
+          <IconButton color="secondary" aria-label="picture" component="span" className={`${style.mobileThemeToggleBtn}`} onClick={() => dispatch(toggleTheme())}>
+            {darkModeTheme ? <Brightness2Icon /> : <Brightness5Icon />}
+          </IconButton>
+        } */}
         <Button
-          id="demo-customized-button"
-          aria-controls={open ? 'demo-customized-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
+          id="openHow2Play"
           variant="contained"
           disableElevation
-          onClick={handleClick}
-          endIcon={<ArrowDropDownIcon />}
+          onClick={handleOpenHelpDialog}
+          // endIcon={ }
           size="large"
           style={{ marginRight: "20px" }}
+          className={`${style.helpBtn}`}
+        // className={`${style.desktop2ThemeToggleBtn}`}
         >
-          Recent
+          How to Play
         </Button>
-        <StyledMenu
-          id="demo-customized-menu"
-          MenuListProps={{
-            'aria-labelledby': 'demo-customized-button',
-          }}
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
 
+        <Button
+          id="openHow2Play"
+          variant="contained"
+          disableElevation
+          onClick={handleOpenStatDialog}
+          // endIcon={ }
+          size="large"
+          style={{ marginRight: "20px" }}
+          className={`${style.desktopThemeToggleBtn}`}
+        // className={`${style.desktop2ThemeToggleBtn}`}
         >
-          <MenuItem onClick={handleClose} disableRipple>
-            Wallet (7cJg) flipped 0.05 and doubled.
-          </MenuItem>
-          <Divider sx={{ my: 0.5 }} />
+          Leaderboards
+        </Button>
+        <IconButton color="secondary" aria-label="picture" component="span" className={`${style.mobileThemeToggleBtn}`} onClick={handleOpenStatDialog} style={{ marginRight: "20px" }}>
+          <ShowChartIcon />
+        </IconButton>
+        {
+          liveplay ?
+            <>
+              <Button
+                id="goLivePlays"
+                variant="contained"
+                disableElevation
+                onClick={goRolldice}
+                // endIcon={ }
+                size="large"
+                style={{ marginRight: "20px" }}
+                className={`${style.desktopThemeToggleBtn}`}
+              // className={`${style.desktop2ThemeToggleBtn}`}
+              >
+                DICE ROLL
+              </Button>
+              <IconButton color="secondary" aria-label="picture" component="span" className={`${style.mobileThemeToggleBtn}`} onClick={goRolldice} style={{ marginRight: "20px" }}>
+                <CasinoIcon />
+              </IconButton>
+            </> :
+            <>
+              <Button
+                id="goLivePlays"
+                variant="contained"
+                disableElevation
+                onClick={goLivePlays}
+                // endIcon={ }
+                size="large"
+                style={{ marginRight: "20px" }}
+                className={`${style.desktopThemeToggleBtn}`}
+              // className={`${style.desktop2ThemeToggleBtn}`}
+              >
+                LIVEPLAYS
+              </Button>
+              <IconButton color="secondary" aria-label="picture" component="span" className={`${style.mobileThemeToggleBtn}`} onClick={goLivePlays} style={{ marginRight: "20px" }}>
+                <DashboardIcon />
+              </IconButton>
+            </>
+        }
+      </div>
+      <div>
 
-          <MenuItem onClick={handleClose} disableRipple>
-            Solgroot flipped 0.05 and doubled 2 times
-          </MenuItem>
-          <Divider sx={{ my: 0.5 }} />
-          <MenuItem onClick={handleClose} disableRipple>
-            Archive
-          </MenuItem>
-          <Divider sx={{ my: 0.5 }} />
 
-          <MenuItem onClick={handleClose} disableRipple>
-            More
-          </MenuItem>
-        </StyledMenu>
         {
           wallet.connected &&
 
           <IconButton color="primary" aria-label="upload picture" component="span" className={`${style.userPfpWrapper}`} onClick={handleProfileDialogOpen}>
-            <img src={profileUserPic === '' ? './img/dice-png.png' : profileUserPic} className={`${style.userPfp}`} />
+            <img src={profileUserPic === '' ? randomUserPfp() : profileUserPic} className={`${style.userPfp}`} />
           </IconButton>
         }
       </div>
@@ -366,9 +437,9 @@ const PageAppBar = (props: Props) => {
 
 
             <p>
-              Dreamy since Mar 2022
+              Dreamer since Mar 2022
             </p>
-            <TextField id="outlined-basic" variant="outlined" onChange={(e) => handleChangeProfileUsername(e.target.value)} value={profileInputedUsername} />
+            <TextField id="outlined-basic" variant="outlined" onChange={(e) => handleChangeProfileUsername(e.target.value)} value={profileInputedUsername} placeholder="Nickname" />
 
           </div>
 
@@ -414,13 +485,111 @@ const PageAppBar = (props: Props) => {
                   </p>
                 </div>
             }
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* help dialog */}
+      <Dialog
+        open={openHelpDialog}
+        onClose={handleHelpDialogClose}
+        aria-labelledby="help-dialog-title"
+        aria-describedby="help-dialog-description"
+        maxWidth={maxHelpDialogWidth}
+
+      >
+        <DialogContent>
+          {/* <DialogContentText id="alert-dialog-description">
+            
+          </DialogContentText> */}
+          <div className={`${style.helpDialogContent}`}>
+            <h2>
+              How to Play
+            </h2>
+
+            <p>
+              This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.
+            </p>
+            <h2>
+              FAQ
+            </h2>
+
+            <p>
+              This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.This is random text that will be filled in later on when I send you the text.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* stat dialog */}
+      <Dialog
+        open={openStatDialog}
+        onClose={handleStatDialogClose}
+        aria-labelledby="stat-dialog-title"
+        aria-describedby="stat-dialog-description"
+        maxWidth={maxHelpDialogWidth}
+
+      >
+        <DialogContent>
+          {/* <DialogContentText id="alert-dialog-description">
+            
+          </DialogContentText> */}
+          <div className={`${style.statDialogContent}`}>
+            <h3>
+              Top Streaks
+            </h3>
+            <List sx={{ bgcolor: 'background.secondary', border: '1px solid', borderColor: 'border.secondary' }} className={`${style.winsInRowList}`}>
+              {mostWinsInRowHistory && mostWinsInRowHistory.length > 0 &&
+                mostWinsInRowHistory.map((item, index) => {
+                  var timeAgo = new Date().getTime() / 1000 - item.timestamp;
+                  var agoString = '';
+                  if (timeAgo < 60) agoString = 'in ' + Math.ceil(timeAgo) + ' seconds ago';
+                  if (timeAgo >= 60 && timeAgo < 120) agoString = '' + Math.floor(timeAgo / 60) + ' minute ago'
+                  if (timeAgo >= 120 && timeAgo < 3600) agoString = '' + Math.floor(timeAgo / 60) + ' minutes ago'
+                  if (timeAgo >= 3600 && timeAgo < 7200) agoString = '' + Math.floor(timeAgo / 3600) + ' hour ago'
+                  if (timeAgo >= 7200 && timeAgo < 86400) agoString = '' + Math.floor(timeAgo / 3600) + ' hours ago'
+                  if (timeAgo >= 86400) agoString = '' + Math.ceil(timeAgo / 86400) + ' days ago'
+                  if (timeAgo >= 86400 * 30) agoString = '' + Math.ceil(timeAgo / 86400 / 30) + ' months ago'
+                  return (
+                    <>
+                      <ListItem
+                        key={index}
+                        secondaryAction={
+                          agoString
+                        }
+                        disablePadding
+                      >
+                        <ListItemButton>
+                          <ListItemAvatar>
+                            <Avatar
+                              alt={`Avatar n°${item + 1}`}
+                              src={item.pfp ? item.pfp : `./img/dice-png.png`}
+                            />
+                          </ListItemAvatar>
+                          <ListItemText   >
+
+                            {item.name} <span style={{ color: "green" }}> Doubled {item.winsInRow} times </span>
 
 
+                          </ListItemText>
+                        </ListItemButton>
+
+                      </ListItem>
+                      {
+                        index !== mostWinsInRowHistory.length - 1 &&
+                        <Divider />
+                      }
+                    </>
+                  )
+                })
+              }
+            </List>
+            {
+              console.log(mostWinsInRowHistory, "::mostWinHistory")
+            }
 
           </div>
-
         </DialogContent>
-
       </Dialog>
     </div>
 

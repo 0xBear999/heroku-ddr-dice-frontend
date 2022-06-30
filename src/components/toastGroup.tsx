@@ -52,7 +52,7 @@ export const successAlert = (text: string, state?: boolean) => {
   } else {
     toast.success(text, {
       position: "top-right",
-      autoClose: 5000,
+      autoClose: 4000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
