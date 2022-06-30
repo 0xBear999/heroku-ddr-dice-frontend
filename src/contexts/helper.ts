@@ -145,7 +145,7 @@ export const initUserPool = async (
     }
 }
 
-export const playGame = async (wallet: WalletContextState, setNum: number, deposit: number, setCurSolBalance: Function) => {
+export const playGame = async (wallet: WalletContextState, setNum: number, deposit: number, setCurSolBalance: Function, setLoading: Function) => {
     let userAddress = wallet.publicKey as PublicKey
     if (!userAddress) return
 
@@ -202,6 +202,7 @@ export const playGame = async (wallet: WalletContextState, setNum: number, depos
             signers: [],
         });
         setCurSolBalance();
+        setLoading();
         await solConnection.confirmTransaction(tx, "finalized");
         let userPoolData = await program.account.playerPool.fetch(playerPoolKey);
         console.log(userPoolData.gameData);
