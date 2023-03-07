@@ -1,46 +1,53 @@
-import type { WalletProviderProps } from "@solana/wallet-adapter-react";
-import { WalletProvider } from "@solana/wallet-adapter-react";
-
+import React, { useMemo } from "react";
 import {
-  getPhantomWallet,
-  getLedgerWallet,
-  getMathWallet,
-  getSolflareWallet,
-  getSolletWallet,
-  getSolongWallet,
-} from '@solana/wallet-adapter-wallets'
-import { useMemo } from "react";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+  ConnectionProvider,
+  WalletContext,
+  WalletProvider,
+} from "@solana/wallet-adapter-react";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import {
+  LedgerWalletAdapter,
+  PhantomWalletAdapter,
+  SlopeWalletAdapter,
+  SolflareWalletAdapter,
+  SolletExtensionWalletAdapter,
+  SolletWalletAdapter,
+  TorusWalletAdapter,
+} from "@solana/wallet-adapter-wallets";
+import { clusterApiUrl } from "@solana/web3.js";
 
-import('@solana/wallet-adapter-react-ui/styles.css' as any);
+// Default styles that can be overridden by your app
+require("@solana/wallet-adapter-react-ui/styles.css");
 
-export function ClientWalletProvider(
-  props: Omit<WalletProviderProps, "wallets">
-): JSX.Element {
+export default function WalletsContextProvider(props: { children: any }) {
+  // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
+  let network: any;
+  network = WalletAdapterNetwork.Devnet;
+
+  // You can also provide a custom RPC endpoint.
+  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+
+  // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading --
+  // Only the wallets you configure here will be compiled into your application, and only the dependencies
+  // of wallets that your users connect to will be loaded.
   const wallets = useMemo(
     () => [
-      getPhantomWallet(),
-      getSolflareWallet(),
-      // getTorusWallet({
-      //   options: {
-      //     // TODO: Get your own tor.us wallet client Id
-      //     clientId:
-      //       "BOM5Cl7PXgE9Ylq1Z1tqzhpydY0RVr8k90QQ85N7AKI5QGSrr9iDC-3rvmy0K_hF0JfpLMiXoDhta68JwcxS1LQ",
-      //   },
-      // }),
-      getLedgerWallet(),
-      getSolongWallet(),
-      getMathWallet(),
-      getSolletWallet(),
+      new PhantomWalletAdapter(),
+      new SlopeWalletAdapter(),
+      new SolflareWalletAdapter({ network }),
+      new TorusWalletAdapter(),
+      new LedgerWalletAdapter(),
+      new SolletWalletAdapter({ network }),
+      new SolletExtensionWalletAdapter({ network }),
     ],
-    []
+    [network]
   );
 
   return (
-    <WalletProvider wallets={wallets} {...props}>
-      <WalletModalProvider {...props} />
-    </WalletProvider>
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect={true}>
+        {props.children}
+      </WalletProvider>
+    </ConnectionProvider>
   );
 }
-
-export default ClientWalletProvider;

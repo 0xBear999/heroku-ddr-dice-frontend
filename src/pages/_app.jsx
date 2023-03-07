@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import type { AppProps } from "next/app";
+// import type { AppProps } from "next/app";
 import dynamic from "next/dynamic";
 import { ConnectionProvider } from "@solana/wallet-adapter-react";
 import { clusterApiUrl } from "@solana/web3.js";
@@ -15,7 +15,9 @@ import { Provider } from 'react-redux';
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
 import { selectDarkTheme, toggleTheme } from '../redux/themeSlice';
 import { ConfettiProvider } from '../components/confetti';
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 
+import WalletsContextProvider from '../contexts/ClientWalletProvider'
 // const SOLANA_NETWORK = WalletAdapterNetwork.Mainnet;
 const SOLANA_NETWORK = WalletAdapterNetwork.Mainnet;
 const network = SOLANA_NETWORK;
@@ -24,17 +26,17 @@ const network = SOLANA_NETWORK;
 // const endpoint = "https://explorer-api.devnet.solana.com";
 // const endpoint = "http://127.0.0.1:8899";
 
-const WalletProvider = dynamic(
-  () => import("../contexts/ClientWalletProvider"),
-  {
-    ssr: false,
-  }
-);
+// const WalletProvider = dynamic(
+//   () => import("../contexts/ClientWalletProvider"),
+//   {
+//     ssr: false,
+//   }
+// );
 
 
 
 
-function MyApp({ Component, pageProps }: AppProps) {
+function MyApp({ Component, pageProps }) {
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
 
@@ -42,8 +44,8 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <Provider store={store}>
 
-      <ConnectionProvider endpoint={endpoint}>
-        <WalletProvider autoConnect>
+      <WalletsContextProvider>
+        <WalletModalProvider>
           <ConfettiProvider>
 
             {/* <ThemeProvider theme={darkTheme}> */}
@@ -51,8 +53,8 @@ function MyApp({ Component, pageProps }: AppProps) {
             {/* </ThemeProvider> */}
           </ConfettiProvider>
 
-        </WalletProvider>
-      </ConnectionProvider>
+        </WalletModalProvider>
+      </WalletsContextProvider>
     </Provider>
 
   );
